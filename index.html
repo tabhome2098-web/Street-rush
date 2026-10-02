@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#06070b" />
+<meta name="description" content="Street Rush — a high-speed street racing game. Play free in your browser." />
+<title>Street Rush — Street Racing Game</title>
+<style>
+  /* ============ RESET / BASE ============ */
+  *,
+  *::before,
+  *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06070b;
+    --bg2: #0b0d14;
+    --panel: #10131c;
+    --panel2: #151926;
+    --line: rgba(255, 255, 255, 0.08);
+    --txt: #e9edf5;
+    --muted: #8b93a7;
+    --accent: #ff3b1f;
+    --accent-2: #ff8a00;
+    --cyan: #00e0ff;
+    --radius: 16px;
+    --header-h: 66px;
+  }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    background: var(--bg);
+    color: var(--txt);
+    font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  img, canvas, video { max-width: 100%; display: block; }
+  button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ============ BACKGROUND FX ============ */
+  .bg-fx {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    background:
+      radial-gradient(900px 600px at 15% -5%, rgba(255, 59, 31, 0.16), transparent 60%),
+      radial-gradient(800px 600px at 90% 10%, rgba(0, 224, 255, 0.10), transparent 60%),
+      radial-gradient(1000px 800px at 50% 110%, rgba(255, 138, 0, 0.10), transparent 65%),
+      linear-gradient(180deg, #06070b 0%, #08090f 40%, #06070b 100%);
+  }
+
+  .bg-grid {
+    position: fixed;
+    inset: -20% -20% -20% -20%;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 64px 64px;
+    transform: perspective(520px) rotateX(58deg);
+    transform-origin: top center;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.85), transparent 72%);
+    -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0.85), transparent 72%);
+    animation: gridMove 6s linear infinite;
+    opacity: 0.65;
+  }
+
+  @keyframes gridMove {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: 0 64px, 64px 0; }
+  }
+
+  /* ============ LAYOUT ============ */
+  .wrap {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  section { scroll-margin-top: calc(var(--header-h) + 14px); }
+
+  /* ============ HEADER ============ */
+  header.nav {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    background: rgba(6, 7, 11, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-inner {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 22px rgba(255, 59, 31, 0.55);
+    flex: 0 0 auto;
+  }
+
+  .logo-mark svg { width: 20px; height: 20px; }
+
+  .logo .street { color: #fff; }
+  .logo .rush {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  nav.links {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  nav.links a {
+    color: var(--muted);
+    position: relative;
+    transition: color 0.25s ease;
+  }
+
+  nav.links a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -6px;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    transition: width 0.3s ease;
+  }
+
+  nav.links a:hover { color: #fff; }
+  nav.links a:hover::after { width: 100%; }
+
+  .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--txt);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.22);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  }
+
+  .icon-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative;
+    min-height: calc(100svh - var(--header-h));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 20px 80px;
+  }
+
+  .hero-inner { max-width: 980px; width: 100%; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 59, 31, 0.4);
+    background: rgba(255, 59, 31, 0.08);
+    color: #ffb3a3;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+
+  @keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.75); }
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 13vw, 9.5rem);
+    font-weight: 900;
+    font-style: italic;
+    line-height: 0.88;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ffffff 0%, #ffd9cd 42%, #ff3b1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 34px rgba(255, 59, 31, 0.42));
+    animation: fadeUp 0.9s 0.05s ease both, titleGlow 4s ease-in-out infinite;
+    user-select: none;
+  }
+
+  @keyframes titleGlow {
+    0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 59, 31, 0.36)); }
+    50% { filter: drop-shadow(0 0 52px rgba(255, 110, 40, 0.62)); }
+  }
+
+  .checker-bar {
+    width: min(420px, 78%);
+    height: 8px;
+    margin: 22px auto 0;
+    border-radius: 4px;
+    background-image:
+      linear-gradient(45deg, rgba(255,255,255,0.9) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.9) 75%),
+      linear-gradient(45deg, rgba(255,255,255,0.9) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.9) 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+    background-color: #14161d;
+    opacity: 0.55;
+    animation: fadeUp 0.9s 0.15s ease both;
+  }
+
+  .hero p.tagline {
+    margin: 22px auto 0;
+    max-width: 620px;
+    color: var(--muted);
+    font-size: clamp(0.95rem, 2.4vw, 1.12rem);
+    animation: fadeUp 0.9s 0.2s ease both;
+  }
+
+  .hero-actions {
+    margin-top: 36px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    animation: fadeUp 0.9s 0.3s ease both;
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 17px 40px;
+    border-radius: 14px;
+    font-weight: 900;
+    font-size: 0.95rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    overflow: hidden;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff3b1f 0%, #ff8a00 100%);
+    color: #180500;
+    box-shadow: 0 12px 40px rgba(255, 59, 31, 0.42), inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+    animation: playPulse 2.6s ease-in-out infinite;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 18px 52px rgba(255, 90, 30, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  }
+
+  @keyframes playPulse {
+    0%, 100% { box-shadow: 0 12px 40px rgba(255, 59, 31, 0.38), inset 0 0 0 1px rgba(255,255,255,0.22); }
+    50% { box-shadow: 0 12px 56px rgba(255, 120, 30, 0.68), inset 0 0 0 1px rgba(255,255,255,0.3); }
+  }
+
+  .btn-primary::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.65), transparent);
+    transform: skewX(-22deg);
+    animation: shine 3.2s ease-in-out infinite;
+  }
+
+  @keyframes shine {
+    0% { left: -120%; }
+    55%, 100% { left: 160%; }
+  }
+
+  .btn-ghost {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    color: var(--txt);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-3px);
+  }
+
+  .hero-stats {
+    margin-top: 44px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px 40px;
+    color: var(--muted);
+    font-size: 0.74rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 700;
+    animation: fadeUp 0.9s 0.4s ease both;
+  }
+
+  .hero-stats span { display: inline-flex; align-items: center; gap: 9px; }
+  .hero-stats span::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(26px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============ SECTION HEADINGS ============ */
+  .section { padding: 84px 0; }
+
+  .sec-head { text-align: center; margin-bottom: 44px; }
+
+  .sec-kicker {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .sec-head h2 {
+    font-size: clamp(1.8rem, 5.4vw, 3rem);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+
+  .sec-head p {
+    margin: 14px auto 0;
+    max-width: 620px;
+    color: var(--muted);
+    font-size: 0.98rem;
+  }
+
+  /* ============ GAME STAGE ============ */
+  .stage-shell { position: relative; }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: 240px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: #04050a;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+  }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.028) 0 1px, transparent 1px 3px);
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0.5;
+  }
+
+  .stage-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent);
+    pointer-events: none;
+  }
+
+  .stage-topbar > * { pointer-events: auto; }
+
+  .stage-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #ffb8aa;
+  }
+
+  .stage-label i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulseDot 1.6s ease-in-out infinite;
+  }
+
+  .stage-fs {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 13px;
+    border-radius: 10px;
+    background: rgba(10, 12, 18, 0.72);
+    border: 1px solid var(--line);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .stage-fs:hover {
+    background: rgba(255, 59, 31, 0.18);
+    border-color: rgba(255, 59, 31, 0.5);
+    transform: translateY(-2px);
+  }
+
+  .stage-fs svg { width: 13px; height: 13px; }
+
+  .stage-body {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 56px 22px 22px;
+    text-align: center;
+    overflow: auto;
+    z-index: 3;
+  }
+
+  /* --- Idle "press play" state --- */
+  .stage-idle { max-width: 520px; }
+
+  .stage-idle .play-orb {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 0 0 rgba(255, 59, 31, 0.5);
+    animation: orbPulse 2.4s ease-out infinite;
+    transition: transform 0.25s ease;
+  }
+
+  .stage-idle .play-orb:hover { transform: scale(1.08); }
+
+  .stage-idle .play-orb svg { width: 30px; height: 30px; fill: #180500; margin-left: 4px; }
+
+  @keyframes orbPulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 59, 31, 0.5); }
+    70% { box-shadow: 0 0 0 30px rgba(255, 59, 31, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 59, 31, 0); }
+  }
+
+  .stage-idle h3 {
+    font-size: clamp(1.1rem, 3.4vw, 1.6rem);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .stage-idle p { color: var(--muted); font-size: 0.9rem; margin-top: 8px; }
+
+  /* --- Unity placeholder --- */
+  .unity-placeholder {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 26px 22px;
+    border-radius: 14px;
+    border: 1px dashed rgba(255, 59, 31, 0.5);
+    background: rgba(255, 59, 31, 0.05);
+  }
+
+  .unity-placeholder .ph-icon {
+    font-size: 2rem;
+    line-height: 1;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 0 14px rgba(255, 59, 31, 0.6));
+  }
+
+  .unity-placeholder h3 {
+    font-size: clamp(1rem, 3vw, 1.35rem);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: linear-gradient(90deg, #ff6a3d, #ffb347);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .unity-placeholder p {
+    color: var(--muted);
+    font-size: 0.86rem;
+    margin-top: 10px;
+  }
+
+  .unity-placeholder code {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid var(--line);
+    color: var(--cyan);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    word-break: break-all;
+  }
+
+  /* Any real Unity canvas dropped in here will be sized by this rule */
+  #unity-container,
+  #unity-canvas,
+  .unity-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #000;
+  }
+
+  /* ============ CONTROLS ============ */
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 18px;
+  }
+
+  .ctrl-card {
+    position: relative;
+    padding: 26px 22px;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: linear-gradient(160deg, var(--panel2), var(--panel));
+    overflow: hidden;
+    transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .ctrl-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(320px 120px at 50% 0%, rgba(255, 59, 31, 0.16), transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .ctrl-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255, 59, 31, 0.45);
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.6);
+  }
+
+  .ctrl-card:hover::before { opacity: 1; }
+
+  .ctrl-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+    position: relative;
+    z-index: 2;
+  }
+
+  kbd {
+    min-width: 42px;
+    padding: 9px 12px;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #222736, #14171f);
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-bottom-width: 3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+    transition: transform 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+  }
+
+  .ctrl-card:hover kbd {
+    transform: translateY(-2px);
+    border-color: rgba(255, 59, 31, 0.55);
+    color: #ffb8aa;
+  }
+
+  .ctrl-card h4 {
+    position: relative;
+    z-index: 2;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .ctrl-card p {
+    position: relative;
+    z-index: 2;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* ============ ABOUT ============ */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 40px;
+    align-items: center;
+  }
+
+  .about-text h2 {
+    font-size: clamp(1.7rem, 5vw, 2.6rem);
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    line-height: 1.05;
+    margin-bottom: 18px;
+  }
+
+  .about-text h2 em {
+    font-style: italic;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .about-text p { color: var(--muted); margin-bottom: 16px; font-size: 0.97rem; }
+
+  .feature-list { list-style: none; margin-top: 24px; display: grid; gap: 12px; }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9rem;
+    color: #c8cfdd;
+  }
+
+  .feature-list li::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    border-radius: 5px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 14px rgba(255, 59, 31, 0.5);
+    clip-path: polygon(14% 46%, 0 60%, 40% 100%, 100% 20%, 86% 6%, 38% 70%);
+  }
+
+  .about-panel {
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: linear-gradient(160deg, var(--panel2), var(--panel));
+    padding: 28px 26px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.09);
+  }
+
+  .stat:last-child { border-bottom: none; padding-bottom: 0; }
+  .stat:first-child { padding-top: 0; }
+
+  .stat .k {
+    color: var(--muted);
+    font-size: 0.76rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .stat .v {
+    font-weight: 900;
+    font-style: italic;
+    font-size: 1.15rem;
+    background: linear-gradient(90deg, #fff, #ffb8aa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    white-space: nowrap;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 30px 0 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  footer .f-logo {
+    font-weight: 900;
+    font-style: italic;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 8px;
+  }
+
+  footer .f-logo span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* ============ LOADING OVERLAY ============ */
+  .loader {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(700px 500px at 50% 40%, rgba(255, 59, 31, 0.14), transparent 65%),
+      rgba(4, 5, 9, 0.97);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+  }
+
+  .loader.active { opacity: 1; visibility: visible; }
+
+  .loader-inner {
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+  }
+
+  .loader-title {
+    font-size: clamp(1.6rem, 8vw, 2.6rem);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, #ffd9cd 45%, #ff3b1f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 26px rgba(255, 59, 31, 0.5));
+    animation: titleGlow 3s ease-in-out infinite;
+  }
+
+  .loader-sub {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+
+  .bar {
+    position: relative;
+    height: 10px;
+    margin-top: 30px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    box-shadow: 0 0 22px rgba(255, 90, 30, 0.75);
+    transition: width 0.16s linear;
+  }
+
+  .loader-meta {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .loader-pct { color: #ffb8aa; }
+
+  .loader-tip {
+    margin-top: 26px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, 0.03);
+    color: #a9b2c5;
+    font-size: 0.8rem;
+  }
+
+  /* ============ REVEAL ANIMATION ============ */
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.75s cubic-bezier(0.22, 0.68, 0.3, 1), transform 0.75s cubic-bezier(0.22, 0.68, 0.3, 1);
+  }
+
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 900px) {
+    .about-grid { grid-template-columns: 1fr; gap: 30px; }
+  }
+
+  @media (max-width: 760px) {
+    :root { --header-h: 60px; }
+    nav.links { display: none; }
+    .section { padding: 62px 0; }
+    .hero { padding: 48px 18px 64px; }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .btn { width: 100%; padding: 16px 24px; }
+    .stage { aspect-ratio: 4 / 3; min-height: 280px; }
+    .stage-body { padding: 54px 16px 18px; }
+    .hero-stats { gap: 10px 22px; font-size: 0.68rem; }
+    .icon-btn .label { display: none; }
+    .icon-btn { padding: 9px 11px; }
+    .about-panel { padding: 22px 20px; }
+    .ctrl-card { padding: 22px 18px; }
+  }
+
+  @media (max-width: 420px) {
+    .badge { font-size: 0.62rem; letter-spacing: 0.18em; padding: 6px 13px; }
+    .checker-bar { height: 6px; }
+    .stage-fs .label { display: none; }
+    .stage-fs { padding: 8px 10px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= BACKGROUND FX ================= -->
+<div class="bg-fx" aria-hidden="true"></div>
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ================= HEADER ================= -->
+<header class="nav">
+  <div class="nav-inner">
+    <a href="#top" class="logo" aria-label="Street Rush home">
+      <span class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4.5 13.5H11L10 22L19.5 10H12.5L13 2Z" fill="#1a0500" stroke="#1a0500" stroke-width="1.2" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span><span class="street">Street</span> <span class="rush">Rush</span></span>
+    </a>
+
+    <nav class="links" aria-label="Main navigation">
+      <a href="#game">Game</a>
+      <a href="#controls">Controls</a>
+      <a href="#about">About</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="icon-btn" id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+        </svg>
+        <span class="label">Fullscreen</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ================= HERO ================= -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="badge"><span class="dot"></span> Free Browser Racing</div>
+
+      <h1>Street Rush</h1>
+      <div class="checker-bar" aria-hidden="true"></div>
+
+      <p class="tagline">
+        Hit the neon-lit asphalt, weave through traffic and outrun the competition.
+        No downloads, no installs — just pure speed, straight in your browser.
+      </p>
+
+      <div class="hero-actions">
+        <button class="btn btn-primary" id="playBtn" type="button">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          Play Game
+        </button>
+        <a class="btn btn-ghost" href="#controls">How To Play</a>
+      </div>
+
+      <div class="hero-stats">
+        <span>Instant Play</span>
+        <span>WebGL Powered</span>
+        <span>Keyboard &amp; Touch</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="section" id="game">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-kicker">The Arena</span>
+        <h2>Start Your Engine</h2>
+        <p>Press play to load the game. Use the fullscreen button for the best racing experience.</p>
+      </div>
+
+      <div class="stage-shell reveal">
+        <div class="stage" id="stage">
+          <div class="stage-topbar">
+            <span class="stage-label"><i></i> Live Build</span>
+            <button class="stage-fs" id="stageFullscreenBtn" type="button" aria-label="Toggle fullscreen game view">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/>
+              </svg>
+              <span class="label">Fullscreen</span>
+            </button>
+          </div>
+
+          <div class="stage-body" id="stageBody">
+
+            <!-- ===== IDLE STATE (shown before the game is launched) ===== -->
+            <div class="stage-idle" id="stageIdle">
+              <button class="play-orb" id="orbPlayBtn" type="button" aria-label="Play Street Rush">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+              </button>
+              <h3>Ready To Race?</h3>
+              <p>Click play to load the Street Rush engine.</p>
+            </div>
+
+            <!-- ==========================================================
+                 ============  UNITY WEBGL BUILD SECTION  ================
+                 ==========================================================
+                 👇 REPLACE THE BLOCK BELOW WITH YOUR UNITY WEBGL BUILD 👇
+
+                 1. Build your project in Unity:
+                    File > Build Settings > WebGL > Build
+
+                 2. Copy these files from the Unity build output folder
+                    into the same folder as this index.html:
+                       - Build/            (folder)
+                       - TemplateData/     (folder, optional)
+                       - the Unity loader script contents
+
+                 3. Paste the Unity <canvas> + loader <script> here,
+                    replacing the placeholder div marked below.
+
+                 Example of what usually goes here:
+
+                   <div id="unity-container" class="unity-desktop">
+                     <canvas id="unity-canvas" tabindex="-1"></canvas>
+                     <div id="unity-loading-bar">
+                       <div id="unity-progress-bar-full"></div>
+                     </div>
+                   </div>
+                   <script src="Build/StreetRush.loader.js"></script>
+                   <script>
+                     createUnityInstance(document.querySelector("#unity-canvas"), {
+                       dataUrl: "Build/StreetRush.data",
+                       frameworkUrl: "Build/StreetRush.framework.js",
+                       codeUrl: "Build/StreetRush.wasm",
+                       streamingAssetsUrl: "StreamingAssets",
+                       companyName: "YourStudio",
+                       productName: "Street Rush",
+                       productVersion: "1.0"
+                     });
+                   </script>
+
+                 NOTE: The CSS above already makes #unity-container and
+                 #unity-canvas fill this stage area automatically.
+                 ========================================================== -->
+
+            <div id="unity-placeholder" class="unity-placeholder">
+              <div class="ph-icon">🏁</div>
+              <h3>Unity WebGL Build Goes Here</h3>
+              <p>
+                This marked block is where your exported Unity WebGL game is mounted.
+                Replace <strong>#unity-placeholder</strong> in the HTML with your
+                Unity canvas and loader script.
+              </p>
+              <code>&lt;canvas id="unity-canvas"&gt;&lt;/canvas&gt;</code>
+            </div>
+
+            <!-- ==========================================================
+                 ==========  END OF UNITY WEBGL BUILD SECTION  ============
+                 ========================================================== -->
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONTROLS ================= -->
+  <section class="section" id="controls">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="sec-kicker">Controls</span>
+        <h2>Master The Streets</h2>
+        <p>Simple to learn, hard to master. Here is everything you need to take the lead.</p>
+      </div>
+
+      <div class="controls-grid">
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>
+          </div>
+          <h4>Steer</h4>
+          <p>Accelerate, brake and steer your car through traffic and tight corners.</p>
+        </div>
+
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>
+          </div>
+          <h4>Alternate Drive</h4>
+          <p>Prefer arrow keys? They work exactly the same as WASD for driving.</p>
+        </div>
+
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>Space</kbd>
+          </div>
+          <h4>Handbrake</h4>
+          <p>Drift around corners and hold the slide to keep your speed through turns.</p>
+        </div>
+
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>Shift</kbd>
+          </div>
+          <h4>Nitro Boost</h4>
+          <p>Burn your nitro for a short burst of top speed. Use it on long straights.</p>
+        </div>
+
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>R</kbd>
+          </div>
+          <h4>Reset Car</h4>
+          <p>Stuck against a wall? Reset your vehicle back onto the racing line.</p>
+        </div>
+
+        <div class="ctrl-card reveal">
+          <div class="ctrl-keys">
+            <kbd>Esc</kbd>
+          </div>
+          <h4>Pause</h4>
+          <p>Pause the race, check your options or exit back to the main menu.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT ================= -->
+  <section class="section" id="about">
+    <div class="wrap">
+      <div class="about-grid">
+        <div class="about-text reveal">
+          <h2>Built For <em>Speed</em></h2>
+          <p>
+            Street Rush is a fast-paced arcade street racing game set in a neon-soaked city.
+            Dodge traffic, chain drifts and push your car to the limit across a growing
+            list of tracks.
+          </p>
+          <p>
+            The game runs entirely in your browser using WebGL — no downloads, no waiting.
+            Jump in on desktop or mobile and race within seconds.
+          </p>
+
+          <ul class="feature-list">
+            <li>High-speed arcade handling with drifting and nitro</li>
+            <li>Multiple neon city tracks and time-of-day lighting</li>
+            <li>Runs smoothly in the browser on desktop and mobile</li>
+            <li>Instant play — no installs, no accounts, no waiting</li>
+          </ul>
+        </div>
+
+        <aside class="about-panel reveal" aria-label="Game information">
+          <div class="stat"><span class="k">Genre</span><span class="v">Arcade Racing</span></div>
+          <div class="stat"><span class="k">Platform</span><span class="v">Web / WebGL</span></div>
+          <div class="stat"><span class="k">Players</span><span class="v">Single Player</span></div>
+          <div class="stat"><span class="k">Input</span><span class="v">Keyboard / Touch</span></div>
+          <div class="stat"><span class="k">Price</span><span class="v">Free</span></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="f-logo">Street <span>Rush</span></div>
+    <p>© <span id="year"></span> Street Rush. All rights reserved. Built with Unity WebGL.</p>
+  </div>
+</footer>
+
+<!-- ================= LOADING OVERLAY ================= -->
+<div class="loader" id="loader" role="dialog" aria-modal="true" aria-label="Loading Street Rush">
+  <div class="loader-inner">
+    <div class="loader-title">Street Rush</div>
+    <div class="loader-sub">Loading Engine</div>
+
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar">
+      <div class="bar-fill" id="barFill"></div>
+    </div>
+
+    <div class="loader-meta">
+      <span id="loaderTip">Warming up the tires…</span>
+      <span class="loader-pct" id="loaderPct">0%</span>
+    </div>
+
+    <div class="loader-tip">Tip: Hold <strong>Shift</strong> on a straight to unleash your nitro boost.</div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- ELEMENTS ---------- */
+  var loader        = document.getElementById("loader");
+  var bar           = document.getElementById("bar");
+  var barFill       = document.getElementById("barFill");
+  var loaderPct     = document.getElementById("loaderPct");
+  var loaderTip     = document.getElementById("loaderTip");
+
+  var playBtn       = document.getElementById("playBtn");
+  var orbPlayBtn    = document.getElementById("orbPlayBtn");
+  var stageIdle     = document.getElementById("stageIdle");
+  var stage         = document.getElementById("stage");
+
+  var fullscreenBtn       = document.getElementById("fullscreenBtn");
+  var stageFullscreenBtn  = document.getElementById("stageFullscreenBtn");
+
+  /* ---------- STATE ---------- */
+  var gameActive = false;
+  var progressTimer = null;
+
+  /* ---------- FOOTER YEAR ---------- */
+  document.getElementById("year").textContent = new Date().getFullYear();
+
+  /* ---------- SCROLL REVEAL ---------- */
+  var revealEls = document.querySelectorAll(".reveal");
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("in");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+
+    revealEls.forEach(function (el) { io.observe(el); });
+  } else {
+    revealEls.forEach(function (el) { el.classList.add("in"); });
+  }
+
+  /* ---------- LOADING SEQUENCE ---------- */
+  var tips = [
+    "Warming up the tires…",
+    "Charging nitro tanks…",
+    "Painting the asphalt…",
+    "Tuning the engine…",
+    "Spawning traffic…",
+    "Calibrating speed cameras…",
+    "Ready to race!"
+  ];
+
+  function setProgress(p) {
+    var pct = Math.max(0, Math.min(100, p));
+    barFill.style.width = pct + "%";
+    loaderPct.textContent = Math.floor(pct) + "%";
+    bar.setAttribute("aria-valuenow", String(Math.floor(pct)));
+  }
+
+  function startLoading() {
+    /* Reset UI */
+    setProgress(0);
+    loaderTip.textContent = tips[0];
+    loader.classList.add("active");
+    document.body.style.overflow = "hidden";
+
+    var progress = 0;
+    clearInterval(progressTimer);
+
+    progressTimer = setInterval(function () {
+      /* Ease toward 100% with a bit of randomness */
+      var step = progress < 70 ? Math.random() * 9 + 4 : Math.random() * 5 + 1.5;
+      progress += step;
+
+      if (progress >= 100) {
+        progress = 100;
+        setProgress(progress);
+        clearInterval(progressTimer);
+
+        var tipIndex = tips.length - 1;
+        loaderTip.textContent = tips[tipIndex];
+
+        setTimeout(function () {
+          loader.classList.remove("active");
+          document.body.style.overflow = "";
+          onGameReady();
+        }, 520);
+        return;
+      }
+
+      setProgress(progress);
+
+      /* Cycle the loading tips based on progress */
+      var tipIndex = Math.min(tips.length - 2, Math.floor(progress / 15));
+      loaderTip.textContent = tips[tipIndex];
+    }, 140);
+  }
+
+  /* ---------- GAME READY ---------- */
+  function onGameReady() {
+    gameActive = true;
+
+    if (stageIdle) {
+      stageIdle.style.display = "none";
+    }
+
+    /*
+      ============================================================
+      UNITY HOOK
+      ============================================================
+      If you want to launch or resume your Unity instance here,
+      do it now. For example:
+
+        if (window.myUnityInstance) {
+          window.myUnityInstance.SendMessage("GameManager", "StartRace");
+        }
+
+      Or simply let your Unity build auto-start on load.
+      ============================================================
+    */
+
+    /* Scroll the stage into view so the player sees the game */
+    if (stage && stage.scrollIntoView) {
+      stage.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  /* ---------- PLAY BUTTONS ---------- */
+  function handlePlay() {
+    startLoading();
+  }
+
+  if (playBtn) playBtn.addEventListener("click", handlePlay);
+  if (orbPlayBtn) orbPlayBtn.addEventListener("click", handlePlay);
+
+  /* ---------- FULLSCREEN ---------- */
+  function isFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+  }
+
+  function requestFs(el) {
+    if (el.requestFullscreen) return el.requestFullscreen();
+    if (el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    if (el.msRequestFullscreen) return el.msRequestFullscreen();
+    return Promise.reject(new Error("Fullscreen not supported"));
+  }
+
+  function exitFs() {
+    if (document.exitFullscreen) return document.exitFullscreen();
+    if (document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    if (document.msExitFullscreen) return document.msExitFullscreen();
+    return Promise.reject(new Error("Exit fullscreen not supported"));
+  }
+
+  function toggleFullscreen() {
+    var target = (gameActive && stage) ? stage : document.documentElement;
+
+    if (!isFullscreen()) {
+      var p = requestFs(target);
+      if (p && typeof p.catch === "function") {
+        p.catch(function () {
+          /* Fallback: try the document element */
+          try { requestFs(document.documentElement); } catch (e) {}
+        });
+      }
+    } else {
+      var q = exitFs();
+      if (q && typeof q.catch === "function") { q.catch(function () {}); }
+    }
+  }
+
+  if (fullscreenBtn) fullscreenBtn.addEventListener("click", toggleFullscreen);
+  if (stageFullscreenBtn) stageFullscreenBtn.addEventListener("click", toggleFullscreen);
+
+  /* ---------- ESC TO CLOSE LOADER (safety) ---------- */
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && loader.classList.contains("active")) {
+      loader.classList.remove("active");
+      document.body.style.overflow = "";
+    }
+  });
+
+  /* ---------- SMOOTH ANCHOR OFFSET FOR OLD BROWSERS ---------- */
+  document.querySelectorAll('a[href^="#"]').forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      var id = link.getAttribute("href");
+      if (!id || id === "#") return;
+      var target = document.querySelector(id);
+      if (!target) return;
+      e.preventDefault();
+      var headerH = 66;
+      var top = target.getBoundingClientRect().top + window.pageYOffset - headerH;
+      window.scrollTo({ top: top, behavior: "smooth" });
+    });
+  });
+})();
+</script>
+</body>
+</html>
